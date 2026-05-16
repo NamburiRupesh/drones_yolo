@@ -52,6 +52,8 @@ __all__ = (
     "ResNetLayer",
     "SCDown",
     "TorchVision",
+    "GhostC2f",
+    "GhostConv",
 )
 
 
@@ -2071,3 +2073,22 @@ class RealNVP(nn.Module):
             self.float()
         z, log_det = self.backward_p(x)
         return self.prior.log_prob(z) + log_det
+
+class GhostC2f(nn.Module):
+    def __init__(self, c1, c2, n=1, *args, **kwargs):
+        super().__init__()
+        self.c = c2 // 2
+
+        self.cv1 = GhostConv(c1, 2 * self.c, 1, 1)
+
+        self.m = nn.ModuleList(
+            GhostBottleneck(self.c, self.c) for _ in range(n)
+        )
+
+        self.cv2 = GhostConv((2 + n) * self.c, c2, 1)
+
+    def forward(self, x):
+        y = list(self.cv1(x).chunk(2, 1))
+        for m in self.m:
+            y.append(m(y[-1]))
+        return self.cv2(torch.cat(y, 1))
