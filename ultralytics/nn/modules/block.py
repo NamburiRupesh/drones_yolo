@@ -54,6 +54,7 @@ __all__ = (
     "TorchVision",
     "GhostC2f",
     "GhostConv",
+    "MobileViTBlock",
 )
 
 
@@ -2092,3 +2093,56 @@ class GhostC2f(nn.Module):
         for m in self.m:
             y.append(m(y[-1]))
         return self.cv2(torch.cat(y, 1))
+
+
+class MobileViTBlock(nn.Module):
+    def __init__(self, c1, c2, patch_size=2):
+        super().__init__()
+
+        self.conv1 = nn.Sequential(
+            nn.Conv2d(c1, c1, 3, 1, 1, groups=c1, bias=False),
+            nn.BatchNorm2d(c1),
+            nn.SiLU()
+        )
+
+        self.conv2 = nn.Sequential(
+            nn.Conv2d(c1, c2, 1, bias=False),
+            nn.BatchNorm2d(c2),
+            nn.SiLU()
+        )
+
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=c2,
+            nhead=4,
+            dim_feedforward=c2 * 2,
+            batch_first=True
+        )
+
+        self.transformer = nn.TransformerEncoder(
+            encoder_layer,
+            num_layers=1
+        )
+
+        self.conv3 = nn.Sequential(
+            nn.Conv2d(c2, c2, 1, bias=False),
+            nn.BatchNorm2d(c2),
+            nn.SiLU()
+        )
+
+        self.patch_size = patch_size
+
+    def forward(self, x):
+        y = self.conv1(x)
+        y = self.conv2(y)
+
+        B, C, H, W = y.shape
+
+        y = y.flatten(2).transpose(1, 2)
+
+        y = self.transformer(y)
+
+        y = y.transpose(1, 2).reshape(B, C, H, W)
+
+        y = self.conv3(y)
+
+        return y

@@ -60,7 +60,8 @@ from .block import (
     SCDown,
     TorchVision,
     GhostConv,
-    GhostC2f
+    GhostC2f,
+    MobileViTBlock
 )
 from .conv import (
     CBAM,

@@ -73,7 +73,8 @@ from ultralytics.nn.modules import (
     YOLOESegment26,
     v10Detect,
     GhostC2f,
-    GhostConv
+    GhostConv,
+    MobileViTBlock
 )
 from ultralytics.utils import DEFAULT_CFG_DICT, LOGGER, SETTINGS, WINDOWS, YAML, colorstr, emojis
 from ultralytics.utils.checks import REMOTE_FILE_PREFIXES, check_file, check_requirements, check_suffix, check_yaml
@@ -1633,7 +1634,8 @@ def parse_model(d, ch, verbose=True):
             C2fCIB,
             A2C2f,
             GhostC2f,
-            GhostConv
+            GhostConv,
+            MobileViTBlock
 
         }
     )
