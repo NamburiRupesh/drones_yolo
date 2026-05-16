@@ -2096,25 +2096,26 @@ class GhostC2f(nn.Module):
 
 
 class MobileViTBlock(nn.Module):
-    def __init__(self, c1, c2, patch_size=2):
+    def __init__(self, c1, c2):
         super().__init__()
 
-        self.conv1 = nn.Sequential(
+        # Local representation
+        self.local = nn.Sequential(
             nn.Conv2d(c1, c1, 3, 1, 1, groups=c1, bias=False),
             nn.BatchNorm2d(c1),
-            nn.SiLU()
-        )
+            nn.SiLU(),
 
-        self.conv2 = nn.Sequential(
             nn.Conv2d(c1, c2, 1, bias=False),
             nn.BatchNorm2d(c2),
             nn.SiLU()
         )
 
+        # Lightweight Transformer
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=c2,
-            nhead=4,
-            dim_feedforward=c2 * 2,
+            nhead=2,                    # even number removes warning
+            dim_feedforward=c2 // 4,   # reduced FFN to keep params low
+            dropout=0.0,
             batch_first=True
         )
 
@@ -2123,26 +2124,26 @@ class MobileViTBlock(nn.Module):
             num_layers=1
         )
 
-        self.conv3 = nn.Sequential(
+        # Fusion
+        self.fusion = nn.Sequential(
             nn.Conv2d(c2, c2, 1, bias=False),
             nn.BatchNorm2d(c2),
             nn.SiLU()
         )
 
-        self.patch_size = patch_size
-
     def forward(self, x):
-        y = self.conv1(x)
-        y = self.conv2(y)
+        y = self.local(x)
 
-        B, C, H, W = y.shape
+        b, c, h, w = y.shape
 
+        # Flatten spatial dimensions
         y = y.flatten(2).transpose(1, 2)
 
+        # Transformer
         y = self.transformer(y)
 
-        y = y.transpose(1, 2).reshape(B, C, H, W)
+        # Restore feature map
+        y = y.transpose(1, 2).reshape(b, c, h, w)
 
-        y = self.conv3(y)
-
-        return y
+        # Fusion
+        return self.fusion(y)
