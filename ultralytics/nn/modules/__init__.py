@@ -61,7 +61,8 @@ from .block import (
     TorchVision,
     GhostConv,
     GhostC2f,
-    MobileViTBlock
+    MobileViTBlock,
+    SimAM,
 )
 from .conv import (
     CBAM,

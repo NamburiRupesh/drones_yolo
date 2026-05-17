@@ -74,7 +74,8 @@ from ultralytics.nn.modules import (
     v10Detect,
     GhostC2f,
     GhostConv,
-    MobileViTBlock
+    MobileViTBlock,
+    SimAM
 )
 from ultralytics.utils import DEFAULT_CFG_DICT, LOGGER, SETTINGS, WINDOWS, YAML, colorstr, emojis
 from ultralytics.utils.checks import REMOTE_FILE_PREFIXES, check_file, check_requirements, check_suffix, check_yaml
@@ -1635,7 +1636,8 @@ def parse_model(d, ch, verbose=True):
             A2C2f,
             GhostC2f,
             GhostConv,
-            MobileViTBlock
+            MobileViTBlock,
+            SimAM
 
         }
     )
